@@ -98,10 +98,10 @@ void Server::start()//启动服务
 						 <<inet_ntoa(client.sin_addr)<<"  port="\
 						 <<ntohs(client.sin_port)<<"加入聊天室"<<endl; 
                         epolladd(clientfd,true);//加入epoll
-                    client_list.push_back(clientfd);      
-                  //map.insert(pair<int,char*>(clientfd,NULL)) ;//将客户端fd加入进去
+        //            client_list.push_back(clientfd);      
+                  m.insert(pair<int,char*>(clientfd,NULL)) ;//将客户端fd加入进去
 				  cout << "添加新的接口到= "<< clientfd << "to epoll" << endl;
-				  cout<<"现在有:"<<client_list.size()<<"个成员在线"<<endl;
+				  cout<<"现在有:"<<m.size()<<"个成员在线"<<endl;
                   //服务器给客户端发送欢迎消息
 				 // cout<<"欢迎来到聊天室"<<endl;
                   char message[BUF_SIZE];
@@ -142,21 +142,23 @@ int Server::sendbroadcastmsg(int clientfd)//广播给客户端
     if(len==0)//表示客户端关闭了自己的链接
 	{
 	  close(clientfd);
-      client_list.remove(clientfd);//删除list中的元素
+      //client_list.remove(clientfd);//删除list中的元素
 	  cout<<"用户:"<<m[clientfd]<<"退出聊天室"<<endl;
-      cout<<"现在有"<<client_list.size()<<"个人在聊天室中"<<endl; 
+      //cout<<"现在有"<<client_list.size()<<"个人在聊天室中"<<endl; 
 	  m.erase(clientfd); //
+      cout<<"现在有"<<m.size()<<"个人在聊天室中"<<endl; 
 	} 
 	else//广播发给所有用户
 	{ 
 	  if(buf[strlen(buf)-1]=='#')//表名输入的是名字
 	  {
 		  buf[strlen(buf)-1]='\0';  	  
-	      m.insert(pair< int,char*>(clientfd,buf));
+	      //m.insert(pair< int,char*>(clientfd,buf));
+		  m[clientfd]=buf; 
 	  }
-	  //当前list和map都在使用
+	  //map都在使用
 	   char arr[]="当前聊天室只有你一个人"; 	
-	   if(client_list.size()==1)//如果聊天室只有一个客户端
+	   if(m.size()==1)//如果聊天室只有一个客户端
 	   {
 	      send(clientfd,arr,strlen(arr),0);
 		  return len;
@@ -164,7 +166,7 @@ int Server::sendbroadcastmsg(int clientfd)//广播给客户端
 	   //cout<<m[clientfd]<<endl; 
 	  sprintf(message, "%s id %d say >> %s ",m[clientfd],clientfd, buf);
 
-	  list<int>::iterator it=client_list.begin();
+	  /*list<int>::iterator it=client_list.begin();
 	  for(;it!=client_list.end();++it) //遍历用户信息
 	  {
 	      if(*it!=clientfd)
@@ -172,6 +174,15 @@ int Server::sendbroadcastmsg(int clientfd)//广播给客户端
 		     if(send(*it,message,BUF_SIZE,0)<0)
 					 return -1;
 		  } 
+	  } */
+	  map<int,char*>::iterator it=m.begin();
+	  for(;it!=m.end();it++)
+	  {
+	     if(it->first!=clientfd)
+		 {
+		     if(send(it->first,message,BUF_SIZE,0)<0)
+					 return -1; 
+		 } 
 	  } 
 	} 
 	return len;
