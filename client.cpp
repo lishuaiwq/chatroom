@@ -49,7 +49,7 @@ void Client::addfd(int& fd,bool isET)
 		ev.data.fd=fd;//监听的文件描述符
    } 
    epoll_ctl(epfd,EPOLL_CTL_ADD,fd,&ev); 
-    cout<<"fd add to epoll"<<endl;
+   // cout<<"fd add to epoll"<<endl;
 } 
     // 断开连接
 void Client::Close()
@@ -64,7 +64,7 @@ void Client::Close()
 } 
     // 启动客户端
 void Client::Start()
-{
+{		
    struct epoll_event events[2];//就绪事件的集合
    Connect();//发起连接
    pid=fork();
@@ -76,10 +76,22 @@ void Client::Start()
    } else if(pid==0)
    {
    //子进程负责写数据
-   close(pipe_fd[0]);  
-   cout<<"Please input 'exit' to exit the char room "<<endl;  
+   int flag=true;
+   close(pipe_fd[0]);
+   cout<<"输入 'exit' 退出聊天室"<<endl;  
    while(isClientwork)//客户端工作正常
-   {
+   {	   
+	  if(flag==true)
+	  {
+	    char buf[10];
+		cout<<"name:";
+		fflush(stdout); 
+		int n=read(STDIN_FILENO,buf,sizeof(buf));
+		buf[n-1]='#';//把换行也读进去了
+       write(pipe_fd[1],buf,sizeof(buf));
+	   flag=false;
+	   continue;
+	  } 
       bzero(&message,BUF_SIZE);
 	  fgets(message,BUF_SIZE,stdin); 
       if(strncasecmp(message,"exit",strlen("exit"))==0)
@@ -94,7 +106,7 @@ void Client::Start()
 		} 
 	  } 
     }
-   }else：//父进程
+   }else//父进程
    {
      close(pipe_fd[1]);  
    while(isClientwork)

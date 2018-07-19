@@ -7,7 +7,7 @@ int main(int argc,char *argv[])
 	  exit(1); 
    } 
    Server s(atoi(argv[1]));
-   printf("port=%d",atoi(argv[1])); 
+//   printf("port=%d",atoi(argv[1])); 
    s.start();
    return 0;
 } 
